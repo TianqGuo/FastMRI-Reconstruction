@@ -4,6 +4,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import h5py
 
+'''
+Data processing for FastMRI data
+owner: Tianquan Guo
+'''
+
 class H5Data:
     k_space: np.array
     target: np.array
