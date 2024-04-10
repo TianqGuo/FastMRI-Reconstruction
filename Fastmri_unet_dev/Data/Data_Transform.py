@@ -6,6 +6,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import h5py
 
+'''
+owner: Fang Zou
+'''
+
 
 def apply_sub_sample(k_space: numpy.array):
     '''
