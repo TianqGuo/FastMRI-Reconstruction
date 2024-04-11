@@ -97,18 +97,20 @@ def create_annotation_binary_mask(image_height, image_width, x, y, width, height
     return mask
 
 
-def read_h5_from_file(path):
+def read_h5_from_file_with_filter(path, slice_idxs):
     '''
     use h5py to read kspace, target, file_name
     :param path: h5 path
     :return:  H5Data
     '''
     with h5py.File(path, 'r') as h5_file:
-        k_space = np.array(h5_file['kspace'])
-        target = np.array(h5_file['reconstruction_esc'])
+        k_space = np.array(h5_file['kspace'][slice_idxs])
+        target = np.array(h5_file['reconstruction_esc'][slice_idxs])
         file_name = os.path.basename(path)
+
         print('Current h5 file keys:', list(h5_file.keys()))
         print('Current h5 file Attrs:', dict(h5_file.attrs))
+
     return H5Data(k_space, target, file_name)
 
 def plot_data_coils(data, slice_nums, cmap=None):
@@ -126,7 +128,7 @@ def plot_data_coils(data, slice_nums, cmap=None):
 def sanity_test():
     h5_file_list = get_h5_file_list('D:\Repos\CS7643\project\knee_singlecoil_val\singlecoil_val', 1)
     print(h5_file_list)
-    h5_data = read_h5_from_file(h5_file_list[0])
+    h5_data = read_h5_from_file_with_filter(h5_file_list[0], [20, 21, 22, 23])
     print(h5_data.k_space.dtype)
     print(h5_data.k_space.shape)
     # slice_kspace = h5_data.k_space[20]
