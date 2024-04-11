@@ -1,3 +1,5 @@
+import os
+import csv
 import numpy as np
 import Data_Transform as dt
 import torch.nn as nn
@@ -10,50 +12,112 @@ owner: Tianquan Guo
 '''
 
 class H5Data:
-    k_space: np.array
-    target: np.array
-    file_name: str
+    def __init__(self, k_space, target, file_name):
+        self.k_space = k_space
+        self.target = target
+        self.file_name = file_name
 
-def Get_h5_file_list(in_dir, max_limit):
+
+def get_h5_file_list(in_dir, max_limit):
     '''
     input:
     indir: the dir containing h5 files
     max_limit: how many files need to process
     return : list (full path of h5 file)
     '''
-    #Todo:
-    return list()
+    files = []
+    for file in os.listdir(in_dir):
+        if file.endswith('.h5'):
+            files.append(os.path.join(in_dir, file))
 
-def Get_annotation_file_list(in_dir):
+    return files[:max_limit]
+
+
+def get_annotation_file_list(in_dir):
     '''
     :param in_dir: the dir containing annotation file
     :return:
     '''
-    #Todo:
-    return list
+    files = []
+    for file in os.listdir(in_dir):
+        files.append(os.path.join(in_dir, file))
 
-def Read_H5_from_file(path):
+    return files
+
+
+def get_annotation_data_from_csv(files):
+    """
+    Read annotations from a list of CSV files.
+
+    Parameters:
+    - files: List of paths to annotation CSV files.
+
+    Returns:
+    - List of dicts, where each dict contains 'file', 'slice', 'x', 'y', 'width', 'height', and 'label' for an annotation.
+    """
+    annotation_data = []
+    for file in files:
+        with open(file, 'r', newline='') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                roi_data = {
+                    'file': row['file'],
+                    'slice': int(row['slice']),
+                    'x': int(row['x']),
+                    'y': int(row['y']),
+                    'width': int(row['width']),
+                    'height': int(row['height']),
+                    'label': row['label']
+                }
+                annotation_data.append(roi_data)
+    return annotation_data
+
+
+def create_annotation_binary_mask(image_height, image_width, x, y, width, height):
+    """
+    Create a binary mask for a given region of interest.
+
+    Parameters:
+    - image_height: The height of the input image.
+    - image_width: The width of the input image.
+    - x, y: The top-left coordinates of the region of interest.
+    - width, height: The dimensions of the region of interest.
+
+    Returns:
+    - A binary mask as a 2D numpy array with the same dimensions as the input image.
+    """
+    mask = np.zeros((image_height, image_width))
+
+    # ROI binary mask
+    mask[y:y + height, x:x + width] = 1
+
+    return mask
+
+
+def read_h5_from_file_with_filter(path, slice_idxs):
     '''
     use h5py to read kspace, target, file_name
     :param path: h5 path
     :return:  H5Data
     '''
-    #Todo:
-    h5data = None
-    return h5data
+    with h5py.File(path, 'r') as h5_file:
+        k_space = np.array(h5_file['kspace'])
+        target = np.array(h5_file['target'])
+        file_name = os.path.basename(path)
+    return H5Data(k_space[slice_idxs], target[slice_idxs], file_name)
 
-def Filter_slices(h5, silice_idxs):
-    '''
-    edit h5 object, only keep the slices we care about
-        idxs: [0,1]
-        original kspace(10,w,h) -> filtered kspace(2,w,h)
-    :param h5:
-    :param silice_idxs:
-    :return: h5
-    '''
-    h5_filtered = h5
-    #Todo:
-    return h5_filtered
+
+# def filter_slices(h5, slice_idxs):
+#     '''
+#     edit h5 object, only keep the slices we care about
+#         idxs: [0,1]
+#         original kspace(10,w,h) -> filtered kspace(2,w,h)
+#     :param h5:
+#     :param silice_idxs:
+#     :return: h5
+#     '''
+#     h5_filtered = None
+#     return h5_filtered
 
 '''
 This class is used for creating dataloader
@@ -76,10 +140,13 @@ class FastMriDataset:
 
     def __getitem__(self, index):
         h5_file = self.h5_file_list[index]
-        h5 = Read_H5_from_file(h5_file)
 
-        ## filter slices we are interested about
-        h5_filter = Filter_slices(h5, self.slice_idxs)
+        # h5 = read_h5_from_file(h5_file)
+        #
+        # ## filter slices we are interested about
+        # h5_filter = filter_slices(h5, self.slice_idxs)
+
+        h5_filter = read_h5_from_file_with_filter(h5_file, self.slice_idxs)
 
         ## sub_sampled kspace dataset
 
