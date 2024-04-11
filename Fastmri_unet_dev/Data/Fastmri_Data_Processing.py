@@ -5,6 +5,9 @@ import Data_Transform as dt
 import torch.nn as nn
 import torch.nn.functional as F
 import h5py
+import matplotlib.pyplot as plt
+import fastmri
+from fastmri.data import transforms as T
 
 '''
 Data processing for FastMRI data
@@ -94,7 +97,7 @@ def create_annotation_binary_mask(image_height, image_width, x, y, width, height
     return mask
 
 
-def read_h5_from_file_with_filter(path, slice_idxs):
+def read_h5_from_file(path):
     '''
     use h5py to read kspace, target, file_name
     :param path: h5 path
@@ -102,9 +105,36 @@ def read_h5_from_file_with_filter(path, slice_idxs):
     '''
     with h5py.File(path, 'r') as h5_file:
         k_space = np.array(h5_file['kspace'])
-        target = np.array(h5_file['target'])
+        target = np.array(h5_file['reconstruction_esc'])
         file_name = os.path.basename(path)
-    return H5Data(k_space[slice_idxs], target[slice_idxs], file_name)
+        print('Current h5 file keys:', list(h5_file.keys()))
+        print('Current h5 file Attrs:', dict(h5_file.attrs))
+    return H5Data(k_space, target, file_name)
+
+def plot_data_coils(data, slice_nums, cmap=None):
+    '''
+    plot the kspace data
+    :param k_space: kspace data
+    :return:
+    '''
+    fig = plt.figure()
+    for i, num in enumerate(slice_nums):
+        plt.subplot(1, len(slice_nums), i + 1)
+        plt.imshow(data[num], cmap=cmap)
+    plt.show()
+
+def sanity_test():
+    h5_file_list = get_h5_file_list('D:\Repos\CS7643\project\knee_singlecoil_val\singlecoil_val', 1)
+    print(h5_file_list)
+    h5_data = read_h5_from_file(h5_file_list[0])
+    print(h5_data.k_space.dtype)
+    print(h5_data.k_space.shape)
+    # slice_kspace = h5_data.k_space[20]
+    plot_data_coils(np.log(np.abs(h5_data.k_space) + 1e-9), [0, 1, 2, 3])
+    slice_kspace2 = T.to_tensor(h5_data.k_space)
+    slice_image = fastmri.ifft2c(slice_kspace2)
+    slice_image_abs = fastmri.complex_abs(slice_image)
+    plot_data_coils(slice_image_abs, [0, 1, 2, 3], cmap='gray')
 
 '''
 This class is used for creating dataloader
@@ -157,6 +187,8 @@ class FastMriDataset:
         return(ifft_tensor, target_tensor)
 
 
+if __name__ == '__main__':
+    sanity_test()
 
 
 
