@@ -106,19 +106,6 @@ def read_h5_from_file_with_filter(path, slice_idxs):
         file_name = os.path.basename(path)
     return H5Data(k_space[slice_idxs], target[slice_idxs], file_name)
 
-
-# def filter_slices(h5, slice_idxs):
-#     '''
-#     edit h5 object, only keep the slices we care about
-#         idxs: [0,1]
-#         original kspace(10,w,h) -> filtered kspace(2,w,h)
-#     :param h5:
-#     :param silice_idxs:
-#     :return: h5
-#     '''
-#     h5_filtered = None
-#     return h5_filtered
-
 '''
 This class is used for creating dataloader
 '''
@@ -140,11 +127,6 @@ class FastMriDataset:
 
     def __getitem__(self, index):
         h5_file = self.h5_file_list[index]
-
-        # h5 = read_h5_from_file(h5_file)
-        #
-        # ## filter slices we are interested about
-        # h5_filter = filter_slices(h5, self.slice_idxs)
 
         h5_filter = read_h5_from_file_with_filter(h5_file, self.slice_idxs)
 
