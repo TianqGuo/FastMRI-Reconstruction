@@ -1,7 +1,7 @@
 import numpy
 import numpy as np
 import torch
-import  Data.Fastmri_Data_Processing
+import Fastmri_Data_Processing
 import torch.nn as nn
 import torch.nn.functional as F
 import h5py
