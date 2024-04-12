@@ -8,6 +8,7 @@ import h5py
 import matplotlib.pyplot as plt
 import fastmri
 from fastmri.data import transforms as T
+from sklearn.model_selection import train_test_split
 
 '''
 Data processing for FastMRI data
@@ -125,12 +126,36 @@ def plot_data_coils(data, slice_nums, cmap=None):
         plt.imshow(data[num], cmap=cmap)
     plt.show()
 
+
+def split_data(file_list, test_size=0.2, random_state=None):
+    """
+    Splits the list of files into training and testing sets.
+
+    Parameters:
+    - file_list: List of file paths.
+    - test_size: Proportion of the dataset to include in the test split.
+    - random_state: Controls the shuffling applied to the data before the split. Pass an int for reproducible output.
+
+    Returns:
+    - train_files: List of files for training.
+    - test_files: List of files for testing.
+    """
+    train_files, test_files = train_test_split(file_list, test_size=test_size, random_state=random_state)
+    return train_files, test_files
+
 def sanity_test():
-    h5_file_list = get_h5_file_list('D:\Repos\CS7643\project\knee_singlecoil_val\singlecoil_val', 1)
+    print("Current Working Directory:", os.getcwd())
+    h5_file_list = get_h5_file_list(r'..\\..\\knee_singlecoil_val', 4)
     print(h5_file_list)
+
+    train_files, test_files = split_data(h5_file_list, test_size=0.25, random_state=42)  # 25% data as test set
+    print("Training files:", len(train_files))
+    print("Testing files:", len(test_files))
+
     h5_data = read_h5_from_file_with_filter(h5_file_list[0], [20, 21, 22, 23])
     print(h5_data.k_space.dtype)
     print(h5_data.k_space.shape)
+
     # slice_kspace = h5_data.k_space[20]
     plot_data_coils(np.log(np.abs(h5_data.k_space) + 1e-9), [0, 1, 2, 3])
     slice_kspace2 = T.to_tensor(h5_data.k_space)
