@@ -1,4 +1,4 @@
-import numpy
+      cimport numpy
 import numpy as np
 import torch
 import  Data.Fastmri_Data_Processing
@@ -35,7 +35,7 @@ def inverse_fft(sub_sample_kspace: numpy.array):
     sub_sample_kspace = T.to_tensor(sub_sample_kspace)      # Convert from numpy array to pytorch tensor
     sampled_image = fastmri.ifft2c(sub_sample_kspace)           # Apply Inverse Fourier Transform to get the complex image
     image = fastmri.complex_abs(sampled_image)   # Compute absolute value to get a real image
-    return image #(num_slices, w, h)
+    return images #(num_slices, w, h) 
 
 def corp_images(in_imgs, w, h):
     '''
