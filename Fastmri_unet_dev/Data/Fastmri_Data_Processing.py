@@ -4,13 +4,11 @@ import numpy as np
 import Data_Transform as dt
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
 import h5py
 import matplotlib.pyplot as plt
 import fastmri
 from fastmri.data import transforms as T
 from sklearn.model_selection import train_test_split
-
 
 '''
 Data processing for FastMRI data
@@ -165,8 +163,6 @@ def create_data_loader(args, data_files, shuffle=True, ):
     )
 
     return data_loader
-
-
 
 def sanity_test():
     print("Current Working Directory:", os.getcwd())
