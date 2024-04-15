@@ -113,7 +113,7 @@ def read_h5_from_file_with_filter(path, slice_idxs):
         print('Current h5 file Attrs:', dict(h5_file.attrs))
 
     return H5Data(k_space, target, file_name)
-
+  
 def plot_data_coils(data, slice_nums, cmap=None):
     '''
     plot the kspace data
@@ -142,6 +142,27 @@ def split_data(file_list, test_size=0.2, random_state=None):
     """
     train_files, test_files = train_test_split(file_list, test_size=test_size, random_state=random_state)
     return train_files, test_files
+
+  
+def create_data_loader(args, data_files, shuffle=True, ):
+    '''
+    Create data loaders such as train loader, validation loader and test loader for training and testing.
+    Use FastMriDataset class
+
+    Returns:
+        A data loader
+    '''
+    # Get dataset
+
+
+    # Create data loader
+    data_loader = DataLoader(
+        dataset= ,
+        batch_size= ,
+        shuffle= ,
+    )
+
+    return data_loader
 
 def sanity_test():
     print("Current Working Directory:", os.getcwd())

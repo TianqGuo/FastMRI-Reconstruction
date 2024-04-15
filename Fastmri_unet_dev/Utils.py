@@ -15,11 +15,12 @@ import h5py
 
 def visualize_h5_slice(h5, slice_nums):
     '''
-    visualize the k-space, target
-    :param
-    h5: a single H5Data(k-space, target, filename)
-    slice_num: the specific slices we need to visualize
-    :return:
+    Visualize the k-space, target
+
+    Args:
+        h5: a single H5Data(k-space, target, filename)
+        slice_num: the specific slices we need to visualize
+
     '''
 
     ### Get volumn k-space
@@ -32,7 +33,7 @@ def visualize_h5_slice(h5, slice_nums):
     fig = plt.figure()
     for i, num in enumerate(slice_nums):
         plt.subplot(1, len(slice_nums), i+1)
-        plt.imshow(data[num], cmap=None)gi
+        plt.imshow(data[num], cmap=None)
 
 def visualize_ifft_vs_target(ifft_img, target_img, slice_num):
     '''
@@ -49,6 +50,15 @@ def visualize_ifft_vs_target(ifft_img, target_img, slice_num):
 
     plt.subplot(1, 2, 2)
     plt.imshow(target_img[slice_num], cmap='gray')
+
+def save_reconstruction(export_dir, reconstructions):
+    '''
+    Save reconstruction output
+    Args:
+        export_dir: save path for reconstruction output
+        reconstructions: reconstructions need to be saved
+
+    '''
 
 
 
