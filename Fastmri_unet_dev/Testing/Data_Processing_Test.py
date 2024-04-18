@@ -2,7 +2,7 @@ import numpy
 
 import Utils
 import config_file
-import  Data.Fastmri_Data_Processing as dp
+import Data.Fastmri_Data_Processing as dp
 from torch.utils.data import DataLoader
 '''
 Test the implemenation of data processing of data pre_processing 
@@ -11,7 +11,7 @@ Test the implemenation of data processing of data pre_processing
 def test_data_processing():
     '''
     The purpose of this function is given an input data dir and input annotation
-    to produce a dataloader which can be pass to the modle later
+    to produce a dataloader which can be pass to the model later
     '''
     ###
     input_data_dir = config_file.INPUT_DATA_DIR
@@ -29,12 +29,16 @@ def test_data_processing():
 
     train_loader = DataLoader(fastmri_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
-    ## Read
-    for ifft_img, target in train_loader:
-        # it iterates each batch
-        # do sth train, and update
-        print(ifft_img.shape)
-    return
+    # ## Read
+    # for ifft_img, target in train_loader:
+    #     # it iterates each batch
+    #     # do sth train, and update
+    #     print(ifft_img.shape)
+    # return
+
+    ifft_img, target = next(iter(train_loader))
+    print(f"ifft image batch shape: {ifft_img.size()}")
+    print(f"target image batch shape: {target.size()}")
 
 
 def main():
