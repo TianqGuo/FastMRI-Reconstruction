@@ -1,7 +1,7 @@
 import os
 import csv
 import numpy as np
-import Data_Transform as dt
+import Data.Data_Transform as dt
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -30,11 +30,12 @@ def get_h5_file_list(in_dir, max_limit):
     max_limit: how many files need to process
     return : list (full path of h5 file)
     '''
+
     files = []
     for file in os.listdir(in_dir):
         if file.endswith('.h5'):
             files.append(os.path.join(in_dir, file))
-
+    max_limit = min(max_limit, len(files))
     return files[:max_limit]
 
 
@@ -107,7 +108,7 @@ def read_h5_from_file_with_filter(path, slice_idxs):
     '''
     with h5py.File(path, 'r') as h5_file:
         k_space = np.array(h5_file['kspace'][slice_idxs])
-        target = np.array(h5_file['reconstruction_esc'][slice_idxs])
+        target = np.array(h5_file['reconstruction_rss'][slice_idxs])
         file_name = os.path.basename(path)
 
         print('Current h5 file keys:', list(h5_file.keys()))
@@ -189,14 +190,14 @@ def sanity_test():
 This class is used for creating dataloader
 '''
 class FastMriDataset:
-    def __init__(self, h5_file_list, annotation_file_list, slice_idxs, corp_size, transform = None):
+    def __init__(self, h5_file_list, slice_idxs, corp_size, transform = None):
         '''
         :param h5_file_list:
         :param annotation_file_list:
         :param slices_idx: the list if slice idx we care about
         '''
         self.h5_file_list = h5_file_list
-        self.annotation_file_list = annotation_file_list
+        #self.annotation_file_list = annotation_file_list
         self.slice_idxs =  slice_idxs
         self.corp_size = corp_size
 
@@ -209,28 +210,36 @@ class FastMriDataset:
 
         h5_filter = read_h5_from_file_with_filter(h5_file, self.slice_idxs)
 
-        ## sub_sampled kspace dataset
+        assert(len(self.slice_idxs) > 0)
+        assert(len(h5_filter.k_space) == len(self.slice_idxs))
+        slice_arr_list = []
+        target_arr_list = []
+        for i in range(len(h5_filter.k_space)):
+            ## sub_sampled kspace dataset
+            slice_kspace = h5_filter.k_space[i]
+            slice_target = h5_filter.target[i]
+            k_space_sub_sampled = dt.apply_sub_sample(slice_kspace)
+            ## IFFT
+            ifft_imgs = dt.inverse_fft(k_space_sub_sampled)
+            #because the eadge area of image is dark, in order to accelerate the computing,we need to corp
+            ## corp ifft images to fit the target size
+            corp_w, corp_h = slice_target.shape
+            corp_ifft_imgs = dt.corp_images(ifft_imgs, corp_w, corp_h)
+            print(corp_ifft_imgs.shape)
+            #corp_target_imgs = dt.corp_images(h5_filter.target, corp_w, corp_h)
+            slice_arr_list.append(corp_ifft_imgs)
+            target_arr_list.append(slice_target)
 
-        k_space_sub_sampled = dt.apply_sub_sample(h5_filter.k_space)
-
-        ## IFFT
-        ifft_imgs = dt.inverse_fft(k_space_sub_sampled)
-
-        ##because the eadge area of image is dark, in order to accelerate the computing,we need to corp
-        ## inversed images and target images
-
-        ## corp both target  and ifft images
-        corp_w, corp_h = self.corp_size
-        corp_ifft_imgs = dt.corp_images(ifft_imgs, corp_w, corp_h)
-        corp_target_imgs = dt.corp_images(h5_filter.target, corp_w, corp_h)
-
-        ## concatenate couple of ifft imgs to one large np array, same for targets
-        ifft_slice_combined = dt.concate_images(corp_ifft_imgs)
-        target_slice_combined = dt.concate_images(corp_target_imgs)
+        ##stack arr
+        slices_arr = np.stack(slice_arr_list, axis=0)
+        targets_arr = np.stack(target_arr_list, axis=0)
 
         ##convert to tensor
-        ifft_tensor = dt.to_tensor(ifft_slice_combined)
-        target_tensor = dt.to_tensor(target_slice_combined)
+        ifft_tensor = dt.to_tensor(slices_arr)
+        target_tensor = dt.to_tensor(targets_arr)
+
+        print("input_tensor_dim", ifft_tensor.shape)
+        print("output_tensor_dim", target_tensor.shape)
 
         ##normalize tensor
         return(ifft_tensor, target_tensor)
