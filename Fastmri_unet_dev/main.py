@@ -64,7 +64,7 @@ def main(args, mode='train'):
         model.to(args.device)
         ...
 
-        test_files =
+        test_files = None
         test_loader = dp.create_data_loader(args, test_files)
 
         # Output and save reconstructions

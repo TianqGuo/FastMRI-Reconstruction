@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-def train_epoch(args, model, train_loader, loss, optimizer):
+def train_epoch(args, model, train_loader, criterion, optimizer):
     '''
     Training process for one single epoch
     Args:
@@ -15,9 +15,23 @@ def train_epoch(args, model, train_loader, loss, optimizer):
 
     '''
 
+    model.train()
+    total_loss = 0
+
+    for batch in train_loader:
+        inputs, targets = batch
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    return total_loss / len(train_loader)
 
 
-def validate(args, model, val_loader):
+def validate(args, model, val_loader, criterion):
     '''
     Validation process
     Args:
@@ -25,8 +39,19 @@ def validate(args, model, val_loader):
         val_loader: validation loader for iterating data
 
     '''
+    model.eval()
+    total_loss = 0
+    with torch.no_grad():
+        for batch in val_loader:
+            inputs, targets = batch
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            total_loss += loss.item()
 
-def save_model(export_dir, ):
+    return total_loss / len(val_loader)
+
+
+def save_model(model, export_dir, epoch):
     '''
     Save model during training
     Args:
@@ -35,9 +60,10 @@ def save_model(export_dir, ):
     Returns:
 
     '''
+    torch.save(model.state_dict(), f'{export_dir}/model_epoch_{epoch}.pth')
 
 
-def train(args, model, loss, optimizer, train_loader, val_loader, num_epochs):
+def train(args, model, criterion, optimizer, train_loader, val_loader, num_epochs):
     '''
     Implementing Training Process
     Args:
@@ -50,12 +76,25 @@ def train(args, model, loss, optimizer, train_loader, val_loader, num_epochs):
 
     '''
     start_epoch = 0
+    export_dir = 'saved_models'
 
-    for epochs in range(start_epoch, num_epochs):
-        # Run single one epoch to get training loss
-        train_loss,  = train_epoch(args, model, train_loader, loss, optimizer)
-        # validation loss
-        val_loss,  = validate(args, model, val_loader)
+    for epoch in range(start_epoch, num_epochs):
+        train_loss = train_epoch(args, model, train_loader, criterion, optimizer)
+        val_loss = validate(args, model, val_loader, criterion)
+
+        print(f'Epoch {epoch}, Train Loss: {train_loss}, Validation Loss: {val_loss}')
+
+    # Save the model every epoch
+    save_model(model, export_dir, epoch)
+
+    # for epochs in range(start_epoch, num_epochs):
+    #     # Run single one epoch to get training loss
+    #     train_loss,  = train_epoch(args, model, train_loader, loss, optimizer)
+    #     # validation loss
+    #     val_loss,  = validate(args, model, val_loader)
+
+
+
 
 
 
