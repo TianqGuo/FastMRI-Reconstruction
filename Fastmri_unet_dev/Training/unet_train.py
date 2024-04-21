@@ -2,10 +2,17 @@
 THis file is used for implement common used functions
 '''
 import torch
+from fastmri.models import Unet
 from torch import nn
 from torch.nn import functional as F
+from torch.utils.data import DataLoader
+from Training.losses import ssim_loss
 
-def train_epoch(args, model, train_loader, criterion, optimizer):
+import config_file
+import pickle
+
+
+def train_epoch(args, model, train_loader, loss_ssim, optimizer):
     '''
     Training process for one single epoch
     Args:
@@ -19,16 +26,37 @@ def train_epoch(args, model, train_loader, criterion, optimizer):
     total_loss = 0
 
     for batch in train_loader:
-        inputs, targets = batch
+        inputs, targets = batch[0], batch[1]
+        inputs, targets = inputs.to(args.device), targets.to(args.device)
+        print("inputs.shape: ", inputs.shape)
+        print("targets.shape: ", inputs.shape)
+        # inputs = complex_to_channels(inputs)
+        # print("inputs.shape: ", inputs.shape)
+        # print("targets.shape: ", inputs.shape)
+        inputs = complex_to_magnitude(inputs)
+        targets = complex_to_magnitude(targets)
+        inputs = inputs.float()
+        targets = targets.float()
+
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        loss = ssim_loss(outputs, targets)
+        loss.to(device=args.device)
         loss.backward()
         optimizer.step()
 
         total_loss += loss.item()
 
     return total_loss / len(train_loader)
+
+
+def complex_to_magnitude(data):
+    # Ensure the input is complex and has an imaginary part
+    if torch.is_complex(data):
+        magnitude = torch.abs(data)
+    else:
+        magnitude = data  # Assuming data is already real
+    return magnitude
 
 
 def validate(args, model, val_loader, criterion):
@@ -39,19 +67,28 @@ def validate(args, model, val_loader, criterion):
         val_loader: validation loader for iterating data
 
     '''
-    model.eval()
+    model.eval()  # Set the model to evaluation mode
     total_loss = 0
-    with torch.no_grad():
+    with torch.no_grad():  # Disable gradient computation for efficiency and to prevent model from learning
         for batch in val_loader:
-            inputs, targets = batch
+            inputs, targets = batch[0], batch[1]
+            inputs, targets = inputs.to(args.device), targets.to(args.device)
+
+            # Convert inputs and targets to their magnitudes if they're complex
+            inputs = complex_to_magnitude(inputs)
+            targets = complex_to_magnitude(targets)
+            inputs = inputs.float()
+            targets = targets.float()
+
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            loss = ssim_loss(outputs, targets)
+
             total_loss += loss.item()
 
     return total_loss / len(val_loader)
 
 
-def save_model(model, export_dir, epoch):
+def save_model(model, export_dir):
     '''
     Save model during training
     Args:
@@ -60,10 +97,18 @@ def save_model(model, export_dir, epoch):
     Returns:
 
     '''
-    torch.save(model.state_dict(), f'{export_dir}/model_epoch_{epoch}.pth')
+    file_path = f'{export_dir}/model_epoch.pkl'
+
+    # Open a file to write the pickled data
+    with open(file_path, 'wb') as file:
+        pickle.dump(model, file)
+
+    print(f"Model saved to {file_path}")
+
+    return file_path
 
 
-def train(args, model, criterion, optimizer, train_loader, val_loader, num_epochs):
+def train(args, model, loss_ssim, optimizer, train_loader, val_loader):
     '''
     Implementing Training Process
     Args:
@@ -78,21 +123,20 @@ def train(args, model, criterion, optimizer, train_loader, val_loader, num_epoch
     start_epoch = 0
     export_dir = 'saved_models'
 
-    for epoch in range(start_epoch, num_epochs):
-        train_loss = train_epoch(args, model, train_loader, criterion, optimizer)
-        val_loss = validate(args, model, val_loader, criterion)
+    for epoch in range(start_epoch, args.num_epochs):
+        train_loss = train_epoch(args, model, train_loader, loss_ssim, optimizer)
+        val_loss = validate(args, model, val_loader, loss_ssim)
 
         print(f'Epoch {epoch}, Train Loss: {train_loss}, Validation Loss: {val_loss}')
 
     # Save the model every epoch
-    save_model(model, export_dir, epoch)
+    # save_model(model, export_dir, epoch)
 
     # for epochs in range(start_epoch, num_epochs):
     #     # Run single one epoch to get training loss
     #     train_loss,  = train_epoch(args, model, train_loader, loss, optimizer)
     #     # validation loss
     #     val_loss,  = validate(args, model, val_loader)
-
 
 
 

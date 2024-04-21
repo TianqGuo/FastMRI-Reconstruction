@@ -11,12 +11,14 @@ def test(args, model, test_loader):
     Returns: MRI reconstruction
     '''
 
-    model.eval()
+    pass
 
-
-    with torch.no_grad():
-        for ... in test_loader:
-
-
-
-    return reconstructions
+    # model.eval()
+    #
+    #
+    # with torch.no_grad():
+    #     for ... in test_loader:
+    #
+    #
+    #
+    # return reconstructions
