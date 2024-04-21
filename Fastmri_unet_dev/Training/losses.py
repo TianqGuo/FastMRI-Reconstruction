@@ -6,7 +6,7 @@ from torch import nn
 from torch.nn import functional as F
 
 
-def create_window(window_size, num_channel):
+def create_window(window_size, num_channel, device):
     '''
     Create convolution kernel
     Args:
@@ -16,10 +16,9 @@ def create_window(window_size, num_channel):
         window: convolution kernel
     '''
 
-    window = torch.ones(num_channel, 1, window_size, window_size)
-    window /= (window_size ** 2)        # uniform window
-
-    return window
+    window = torch.ones((num_channel, 1, window_size, window_size))
+    window /= window_size ** 2
+    return window.to(device)
 def _ssim(img1, img2, window, window_size=11, k1=0.01, k2=0.03, data_range=1.0):
     '''
     Compute Structural Similarity Index Metric (SSIM) value
@@ -35,26 +34,22 @@ def _ssim(img1, img2, window, window_size=11, k1=0.01, k2=0.03, data_range=1.0):
     Returns:
         pixel-wise SSIM
     '''
-    C1 = (k1 * data_range)**2
-    C2 = (k2 * data_range)**2
+    C1 = (k1 * data_range) ** 2
+    C2 = (k2 * data_range) ** 2
 
-    mu1 = F.con2d(img1, window, padding=window_size//2)
-    mu2 = F.con2d(img2, window, padding=window_size//2)
+    mu1 = F.conv2d(img1, window, padding=window_size // 2, groups=img1.shape[1])
+    mu2 = F.conv2d(img2, window, padding=window_size // 2, groups=img2.shape[1])
 
     mu1_sq = mu1.pow(2)
     mu2_sq = mu2.pow(2)
-    mu_cross = mu1 * mu2
+    mu1_mu2 = mu1 * mu2
 
-    sig_cross = F.con2d(img1 * img2, window, padding=window_size//2) - mu_cross
-    sig1_sq = F.con2d(img1 * img1, window, padding=window_size//2) - mu1_sq
-    sig2_sq = F.con2d(img2 * img2, window, padding=window_size//2) - mu2_sq
+    sigma1_sq = F.conv2d(img1 * img1, window, padding=window_size // 2, groups=img1.shape[1]) - mu1_sq
+    sigma2_sq = F.conv2d(img2 * img2, window, padding=window_size // 2, groups=img2.shape[1]) - mu2_sq
+    sigma12 = F.conv2d(img1 * img2, window, padding=window_size // 2, groups=img1.shape[1]) - mu1_mu2
 
-    Luminance = (2 * mu_cross + C1) / (mu1_sq + mu2_sq + C1)
-    Contrast = (2 * sig_cross + C2) / (sig1_sq + sig2_sq + C2)
-
-    ssim = Luminance * Contrast
-
-    return ssim
+    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+    return ssim_map
 
 def ssim_loss(input, target, window_size=11, size_average=True):
     '''
@@ -69,15 +64,14 @@ def ssim_loss(input, target, window_size=11, size_average=True):
         ssim: SSIM values over the whole batch of images
     '''
     # Create window for convolution
-    window = create_window(window_size=window_size, num_channel=1)
-    # window = window.to(current_device)
-
-    ssim_val = _ssim(input, target, window)
+    device = input.device  # Get the device from the input tensor
+    window = create_window(window_size, input.size(1), device)  # Pass the device to the function
+    ssim_map = _ssim(input, target, window, window_size)
 
     if size_average:
-        ssim = ssim_val.mean()
+        return ssim_map.mean()
     else:
-        ssim = ssim_val.sum()
+        return ssim_map.sum()
 
     return ssim
 

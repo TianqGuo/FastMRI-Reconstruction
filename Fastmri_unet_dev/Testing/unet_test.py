@@ -15,7 +15,7 @@ def test(args, model, test_loader):
     Returns:
         reconstruction: Dictionary of mapping from file name to reconstruction image
     '''
-
+    
     model.eval()
     reconstructions = defaultdict(list)              # defaultdict could hold a key-value pair
 
@@ -35,4 +35,3 @@ def test(args, model, test_loader):
         )
 
     return reconstructions
-

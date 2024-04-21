@@ -10,7 +10,7 @@ import fastmri
 from fastmri.data import transforms as T
 from matplotlib import pyplot as plt
 
-import cv2
+# import cv2
 '''
 owner: Fang Zou
 '''
