@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import fastmri
 from fastmri.data import transforms as T
 from sklearn.model_selection import train_test_split
+import config_file
 
 '''
 Data processing for FastMRI data
@@ -100,13 +101,16 @@ def create_annotation_binary_mask(image_height, image_width, x, y, width, height
     return mask
 
 
-def read_h5_from_file_with_filter(path, slice_idxs):
+def read_h5_from_file_with_filter(path, slice_idxs=None):
     '''
     use h5py to read kspace, target, file_name
     :param path: h5 path
     :return:  H5Data
     '''
     with h5py.File(path, 'r') as h5_file:
+        if slice_idxs is None:
+            slice_idxs = slice(0, h5_file['kspace'].shape[0])
+
         k_space = np.array(h5_file['kspace'][slice_idxs])
         target = np.array(h5_file['reconstruction_rss'][slice_idxs])
         file_name = os.path.basename(path)
@@ -168,7 +172,7 @@ def create_data_loader(args, data_files, shuffle=True, ):
 
 def sanity_test():
     print("Current Working Directory:", os.getcwd())
-    h5_file_list = get_h5_file_list(r'..\\..\\knee_singlecoil_val', 4)
+    h5_file_list = get_h5_file_list(config_file.INPUT_DATA_DIR, 4)
     print(h5_file_list)
 
     train_files, test_files = split_data(h5_file_list, test_size=0.25, random_state=42)  # 25% data as test set
