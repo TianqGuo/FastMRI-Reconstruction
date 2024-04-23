@@ -5,10 +5,12 @@ import os
 
 import torch
 from fastmri.models import Unet
+from matplotlib import pyplot as plt
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from Training.losses import ssim_loss
+from Training.losses import mse_loss
 
 import config_file
 import pickle
@@ -27,9 +29,10 @@ def train_epoch(args, model, train_loader, loss_ssim, optimizer):
     model.train()
     total_loss = 0
 
-    for batch in train_loader:
+    for i, batch in enumerate(train_loader):
         inputs, targets = batch[0], batch[1]
         inputs, targets = inputs.to(args.device), targets.to(args.device)
+        print("Current Batch number: ", i)
         print("inputs.shape: ", inputs.shape)
         print("targets.shape: ", inputs.shape)
         # inputs = complex_to_channels(inputs)
@@ -42,7 +45,10 @@ def train_epoch(args, model, train_loader, loss_ssim, optimizer):
 
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = ssim_loss(outputs, targets)
+        if loss_ssim:
+            loss = ssim_loss(outputs, targets)
+        else:
+            loss = mse_loss(outputs, targets)
         loss.to(device=args.device)
         loss.backward()
         optimizer.step()
@@ -61,7 +67,7 @@ def complex_to_magnitude(data):
     return magnitude
 
 
-def validate(args, model, val_loader, criterion):
+def validate(args, model, val_loader, loss_ssim, threshold_ssim=0.9, threshold_mse=0.1):
     '''
     Validation process
     Args:
@@ -71,6 +77,9 @@ def validate(args, model, val_loader, criterion):
     '''
     model.eval()  # Set the model to evaluation mode
     total_loss = 0
+    correct_pixels = 0
+    total_pixels = 0
+
     with torch.no_grad():  # Disable gradient computation for efficiency and to prevent model from learning
         for batch in val_loader:
             inputs, targets = batch[0], batch[1]
@@ -83,9 +92,22 @@ def validate(args, model, val_loader, criterion):
             targets = targets.float()
 
             outputs = model(inputs)
-            loss = ssim_loss(outputs, targets)
+            if loss_ssim:
+                loss = ssim_loss(outputs, targets)
+            else:
+                loss = mse_loss(outputs, targets)
 
             total_loss += loss.item()
+
+            # Compute "accuracy"
+            diff = torch.abs(outputs - targets)
+            correct_pixels += (diff < threshold_mse).sum().item()
+            total_pixels += torch.numel(diff)
+
+        average_loss = total_loss / len(val_loader)
+        accuracy = correct_pixels / total_pixels
+
+    print(f'Validation Loss: {average_loss}, MSE Accuracy: {accuracy}')
 
     return total_loss / len(val_loader)
 
@@ -128,14 +150,28 @@ def train(args, model, loss_ssim, optimizer, train_loader, val_loader):
     export_dir = config_file.OUTPUT_DIR
     print("export_dir: ", export_dir)
 
-    for epoch in range(start_epoch, args.num_epochs):
+    train_losses = []
+    val_losses = []
+
+    for epoch in range(start_epoch, config_file.EPOCHS):
         train_loss = train_epoch(args, model, train_loader, loss_ssim, optimizer)
-        val_loss = validate(args, model, val_loader, loss_ssim)
+        val_loss = validate(args, model, val_loader, loss_ssim, config_file.THRESHOLD_SSIM, config_file.THRESHOLD_MSE)
+
+        train_losses.append(train_loss)
+        val_losses.append(val_loss)
 
         print(f'Epoch {epoch}, Train Loss: {train_loss}, Validation Loss: {val_loss}')
         save_model(model, export_dir)
 
-
+    # Plotting after training is complete
+    plt.plot(train_losses, label='Training Loss')
+    plt.plot(val_losses, label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Loss Over Epochs')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 

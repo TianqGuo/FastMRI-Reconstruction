@@ -86,7 +86,7 @@ def mse_loss(input, target):
 
     '''
 
-    return F.MSELoss(input, target)
+    return F.mse_loss(input, target)
 
 
 

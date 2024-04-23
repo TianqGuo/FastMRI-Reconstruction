@@ -115,6 +115,7 @@ def read_h5_from_file_with_filter(path, slice_idxs=None):
         target = np.array(h5_file['reconstruction_rss'][slice_idxs])
         file_name = os.path.basename(path)
 
+        print('Current h5 file path:', path)
         print('Current h5 file keys:', list(h5_file.keys()))
         print('Current h5 file Attrs:', dict(h5_file.attrs))
 

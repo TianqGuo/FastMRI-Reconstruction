@@ -94,7 +94,7 @@ def main(args, mode='train'):
 
     if mode == 'train':
         # Training
-        unet_train.train(args, model, True, optimizer, train_loader, validation_loader)
+        unet_train.train(args, model, config_file.IS_SSIM_LOSS, optimizer, train_loader, validation_loader)
 
     elif mode == 'test':
 
