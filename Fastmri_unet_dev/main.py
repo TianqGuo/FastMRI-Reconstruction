@@ -69,13 +69,25 @@ def main(args, mode='train'):
 
     num_channel = train_loader.dataset[0][0].shape[0]
 
+    num_channel_first_layer_output = config_file.NUM_CHANNEL_FIRST_LAYER_OUTPUT
+
+    num_pool_layers = config_file.NUM_POOL_LAYERS
+
+    dropout_prob = config_file.DROPOUT_PROB
+
     print("num_channel: ", num_channel)
+
+    print("num_channel_first_layer_output: ", num_channel_first_layer_output)
+
+    print("num_pool_layers: ", num_pool_layers)
+
+    print("dropout_prob: ", dropout_prob)
 
     model = Unet(in_chans=num_channel,
                  out_chans=num_channel,
-                 chans=32,
-                 num_pool_layers=4,
-                 drop_prob=0.0)
+                 chans=num_channel_first_layer_output,
+                 num_pool_layers=num_pool_layers,
+                 drop_prob=dropout_prob)
     model.to(args.device)
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr)

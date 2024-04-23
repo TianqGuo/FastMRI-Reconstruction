@@ -1,6 +1,8 @@
 '''
 THis file is used for implement common used functions
 '''
+import os
+
 import torch
 from fastmri.models import Unet
 from torch import nn
@@ -97,6 +99,8 @@ def save_model(model, export_dir):
     Returns:
 
     '''
+    os.makedirs(export_dir, exist_ok=True)
+
     file_path = f'{export_dir}/model_epoch.pkl'
 
     # Open a file to write the pickled data
@@ -121,22 +125,15 @@ def train(args, model, loss_ssim, optimizer, train_loader, val_loader):
 
     '''
     start_epoch = 0
-    export_dir = 'saved_models'
+    export_dir = config_file.OUTPUT_DIR
+    print("export_dir: ", export_dir)
 
     for epoch in range(start_epoch, args.num_epochs):
         train_loss = train_epoch(args, model, train_loader, loss_ssim, optimizer)
         val_loss = validate(args, model, val_loader, loss_ssim)
 
         print(f'Epoch {epoch}, Train Loss: {train_loss}, Validation Loss: {val_loss}')
-
-    # Save the model every epoch
-    # save_model(model, export_dir, epoch)
-
-    # for epochs in range(start_epoch, num_epochs):
-    #     # Run single one epoch to get training loss
-    #     train_loss,  = train_epoch(args, model, train_loader, loss, optimizer)
-    #     # validation loss
-    #     val_loss,  = validate(args, model, val_loader)
+        save_model(model, export_dir)
 
 
 
