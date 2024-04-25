@@ -39,8 +39,7 @@ def apply_sub_sample(k_space: numpy.array):
 
     cols_start = (cols - central_cols)//2
     cols_end = cols_start +central_cols
-    print(rows_start, rows_end)
-    print(cols_start,cols_end)
+
     sampling_mask[::2, ::2] = False
     sampling_mask[rows_start:rows_end, cols_start:cols_end] = True
 
