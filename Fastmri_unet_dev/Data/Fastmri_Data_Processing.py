@@ -248,9 +248,6 @@ class FastMriDataset:
         ifft_tensor = dt.to_tensor(slices_arr)
         target_tensor = dt.to_tensor(targets_arr)
 
-        print("input_tensor_dim", ifft_tensor.shape)
-        print("output_tensor_dim", target_tensor.shape)
-
         ##normalize tensor
         return(ifft_tensor, target_tensor)
 

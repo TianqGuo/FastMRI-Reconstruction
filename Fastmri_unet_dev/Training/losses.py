@@ -83,10 +83,9 @@ def mse_loss(input, target):
         target:
 
     Returns:
-
     '''
-
-    return F.MSELoss(input, target)
+    mse_loss = nn.MSELoss()
+    return mse_loss(input, target)
 
 
 
