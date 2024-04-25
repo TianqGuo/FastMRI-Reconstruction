@@ -135,6 +135,13 @@ def test_sub_sampled():
     print('The sub sampled k space: ', subsample_k_space.shape)
     plt.imshow(sub_k_space_mag, cmap='gray')
     plt.show()
+def get_scaled_img(img):
+    # Calculate the minimum and maximum pixel values
+    min_val = np.min(img)
+    max_val = np.max(img)
+    # Scale the image data to the range [0, 1]
+    scaled_image_data = (img - min_val) / (max_val - min_val)
+    return scaled_image_data
 
 def test_ifft():
     path_to_h5 = '/home/cy/Documents/Deep_learning/proj/FastMRI-Reconstruction/Fastmri_unet_dev/Data/test_h5_folder/file1000000.h5'
@@ -142,15 +149,17 @@ def test_ifft():
     h5 = h5py.File(path_to_h5, 'r')
     slice_idxs = 2
     k_space = np.array(h5['kspace'][slice_idxs])
-    print(k_space.shape)
     target = np.array(h5['reconstruction_rss'][slice_idxs])
+    print("min_target: ", np.min(target))
+    print("max_target: ", np.max(target))
     recons = inverse_fft(k_space)
     recons = corp_images(recons, target.shape[1], target.shape[0])
-    print(recons.shape)
-    plt.imshow(target, cmap ='gray')
-    print(target.shape)
-    plt.show()
-    plt.imshow(np.abs(recons), cmap='gray')
+    print("min_recons: ", np.min(np.abs(recons)))
+    print("max_recons: ", np.max(np.abs(recons)))
+    target_scaled = get_scaled_img(target)
+    recons_scaled = get_scaled_img(np.abs(recons))
+    plt.imshow(target_scaled, cmap ='gray')
+    plt.imshow(recons_scaled, cmap='gray')
     plt.show()
 
 def test_sub_ifft():

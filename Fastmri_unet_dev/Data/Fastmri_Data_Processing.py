@@ -231,6 +231,12 @@ class FastMriDataset:
             corp_ifft_imgs = dt.corp_images(ifft_imgs, corp_w, corp_h)
             print(corp_ifft_imgs.shape)
             #corp_target_imgs = dt.corp_images(h5_filter.target, corp_w, corp_h)
+            corp_ifft_imgs = np.abs(corp_ifft_imgs)
+            corp_ifft_imgs = (corp_ifft_imgs - np.min(corp_ifft_imgs))/(np.max(corp_ifft_imgs) - np.min(corp_ifft_imgs))
+
+            slice_target = np.abs(slice_target)
+            slice_target = (slice_target- np.min(slice_target))/(np.max(slice_target) - np.min(slice_target))
+
             slice_arr_list.append(corp_ifft_imgs)
             target_arr_list.append(slice_target)
 
