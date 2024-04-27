@@ -27,7 +27,7 @@ def arg_parser():
     parser.add_argument('--batch-size', default=config_file.BATCH_SIZE, type=int, help='Batch Size')
     parser.add_argument('--GPU-NUM', type=int, default=0, help='GPU number to allocate')
     parser.add_argument('--num-epochs', type=int, default=3, help='Number of epochs')
-    parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
+    parser.add_argument('--lr', type=float, default=config_file.LR, help='Learning rate')
     parser.add_argument('--in-chans', type=int, default=1, help='Size of input channels for network')
     parser.add_argument('--out-chans', type=int, default=1, help='Size of output channels for network')
     parser.add_argument('--device', type=str, default='cuda', help='device to run on')
@@ -94,23 +94,26 @@ def main(args, mode='train'):
 
     if mode == 'train':
         # Training
-        unet_train.train(args, model, True, optimizer, train_loader, validation_loader)
+        unet_train.train(args, model, config_file.IS_SSIM, optimizer, train_loader, validation_loader)
 
     elif mode == 'test':
 
-        test_files = None
-        test_loader = dp.create_data_loader(args, test_files)
+        # test_files = None
+        # test_loader = dp.create_data_loader(args, test_files)
 
-        # Output and save reconstructions
-        reconstructions = unet_test.test(args, model, test_loader)\
+        # # Output and save reconstructions
+        # reconstructions = unet_test.test(args, model, test_loader)\
 
-
+        # load model and plot the results
+        print("Current inputs shape: ", train_loader.dataset[0][0].shape)
+        unet_train.load_predict_and_plot(args, config_file.MODEL_PATH, train_loader.dataset[0][0].unsqueeze(0))
 
 
 if __name__ == '__main__':
     args = arg_parser()
 
-    main(args, mode='train')
+    main(args, mode='test')
+
 
 
 

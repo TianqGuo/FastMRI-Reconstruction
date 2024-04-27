@@ -69,9 +69,9 @@ def ssim_loss(input, target, window_size=11, size_average=True):
     ssim_map = _ssim(input, target, window, window_size)
 
     if size_average:
-        return ssim_map.mean()
+        return 1 - ssim_map.mean()
     else:
-        return ssim_map.sum()
+        return 1 - ssim_map.sum()
 
     return ssim
 
