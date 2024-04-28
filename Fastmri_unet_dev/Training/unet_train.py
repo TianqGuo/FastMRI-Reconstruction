@@ -158,6 +158,20 @@ def train(args, model, loss_ssim, optimizer, train_loader, val_loader):
     plt.title('Loss Over Epochs')
     plt.legend()
     plt.grid()
+
+    # Annotating the plot with hyperparameter information
+    text_str = (
+        f'LR: {config_file.LR}\n'
+        f'EPOCHS: {config_file.EPOCHS}\n'
+        f'DROPOUT_PROB: {config_file.DROPOUT_PROB}\n'
+        f'NUM_POOL_LAYERS: {config_file.NUM_POOL_LAYERS}\n'
+        f'ACCELERATE_RATE: {config_file.ACCELERATE_RATE}\n'
+        f'BATCH_SIZE: {config_file.BATCH_SIZE}\n'
+        f'SLICES: {config_file.SLICES}'
+    )
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes, fontsize=10,
+             verticalalignment='top', bbox=props)
     plt.show()
 
 

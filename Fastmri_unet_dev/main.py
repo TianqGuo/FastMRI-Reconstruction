@@ -112,7 +112,7 @@ def main(args, mode='train'):
 if __name__ == '__main__':
     args = arg_parser()
 
-    main(args, mode='test')
+    main(args, mode=config_file.JOB_TYPE)
 
 
 
