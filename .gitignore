@@ -21,3 +21,4 @@ lightning_logs/
 build/
 dist/
 fastmri/_version.py
+data/

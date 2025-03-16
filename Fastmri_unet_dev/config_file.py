@@ -2,8 +2,8 @@
 "Some global configure settings here"
 import os
 
-INPUT_DATA_DIR = os.path.join(os.path.dirname(__file__), "D:\Repos\CS7643\project\knee_singlecoil_val\singlecoil_val")
-INPUT_VALID_DATA_DIR = os.path.join(os.path.dirname(__file__), "D:\Repos\CS7643\project\knee_singlecoil_val\singlecoil_val")
+INPUT_DATA_DIR = os.path.join(os.path.dirname(__file__), "D:\Repos\FastMRI-Reconstruction\data\singlecoil_val")
+INPUT_VALID_DATA_DIR = os.path.join(os.path.dirname(__file__), "D:\Repos\FastMRI-Reconstruction\data\singlecoil_val")
 INPUT_ANOTATION_DIR = ""
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "\saved_models")
 LOG_FILE_PATH = ""
