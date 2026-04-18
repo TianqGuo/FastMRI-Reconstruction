@@ -115,6 +115,7 @@ def read_h5_from_file_with_filter(path, slice_idxs=None):
         target = np.array(h5_file['reconstruction_rss'][slice_idxs])
         file_name = os.path.basename(path)
 
+        print('Current h5 file path:', path)
         print('Current h5 file keys:', list(h5_file.keys()))
         print('Current h5 file Attrs:', dict(h5_file.attrs))
 
@@ -247,6 +248,9 @@ class FastMriDataset:
         ##convert to tensor
         ifft_tensor = dt.to_tensor(slices_arr)
         target_tensor = dt.to_tensor(targets_arr)
+
+        print("input_tensor_dim", ifft_tensor.shape)
+        print("output_tensor_dim", target_tensor.shape)
 
         ##normalize tensor
         return(ifft_tensor, target_tensor)

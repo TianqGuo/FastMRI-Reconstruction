@@ -5,6 +5,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+import config_file
+
 
 def create_window(window_size, num_channel, device):
     '''
@@ -19,7 +21,8 @@ def create_window(window_size, num_channel, device):
     window = torch.ones((num_channel, 1, window_size, window_size))
     window /= window_size ** 2
     return window.to(device)
-def _ssim(img1, img2, window, window_size=11, k1=0.01, k2=0.03, data_range=1.0):
+
+def _ssim(img1, img2, window, window_size=config_file.WINDOW_SIZE, k1=0.01, k2=0.03, data_range=1.0):
     '''
     Compute Structural Similarity Index Metric (SSIM) value
     Args:
@@ -69,9 +72,9 @@ def ssim_loss(input, target, window_size=11, size_average=True):
     ssim_map = _ssim(input, target, window, window_size)
 
     if size_average:
-        return ssim_map.mean()
+        return 1 - ssim_map.mean()
     else:
-        return ssim_map.sum()
+        return 1 - ssim_map.sum()
 
     return ssim
 
